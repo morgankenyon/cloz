@@ -29,29 +29,81 @@
   [wasm-bytes]
   (first (drop 1 wasm-bytes)))
 
+
+
+
+(defn function-to-map
+  [wasm-bytes]
+  ;(println wasm-bytes)
+  {:num-of-params (first wasm-bytes) :body (drop 1 wasm-bytes)})
+
+(defn extract-functions
+  [wasm-bytes num-of-funcs]
+  ;(println wasm-bytes)
+  (let [func-length (first wasm-bytes)
+        func-bytes (take func-length (drop 1 wasm-bytes))]
+    (if (= 1 num-of-funcs)
+      (function-to-map func-bytes)
+      (list (function-to-map func-bytes) (extract-functions (drop (+ 1 func-length) wasm-bytes) (- num-of-funcs 1))))))
 (defn build-type-section
   [wasm-bytes length]
-  "in build-type-section")
+  ;(println "in build-type-section")
+  {:sec_name "01_type" :content (take (+ 2 length) wasm-bytes) :rest (drop (+ length 2) wasm-bytes)})
+
+(defn build-function-section
+  [wasm-bytes length]
+  {:sec_name "03_function" :content (take (+ 2 length) wasm-bytes) :rest (drop (+ length 2) wasm-bytes)})
+
+(defn build-export-section
+  [wasm-bytes length]
+  {:sec_name "07_export" :content (take (+ 2 length) wasm-bytes) :rest (drop (+ length 2) wasm-bytes)})
+
+(defn build-code-section
+  [wasm-bytes length]
+  (let [num-of-funcs (first (drop 2 wasm-bytes))]
+    ;(println wasm-bytes)
+    {:sec_name "10_code" :content (extract-functions (drop 3 wasm-bytes) num-of-funcs)}))
+
 (defn extract-section
   [wasm-bytes]
   (let [section-type (first wasm-bytes)
         section-length (calculate-length wasm-bytes)]
+    ;(println wasm-bytes)
     (cond
       ;; type section
       (= section-type 1) (build-type-section wasm-bytes section-length)
       ;; function section, update to function
-      (= section-type 3) (build-type-section wasm-bytes section-length)
+      (= section-type 3) (build-function-section wasm-bytes section-length)
       ;; export section, update to export
-      (= section-type 7) (build-type-section wasm-bytes section-length)
+      (= section-type 7) (build-export-section wasm-bytes section-length)
       ;; code section, update to code
-      (= section-type 10) (build-type-section wasm-bytes section-length)
-      :else (list "unknown" section-length))))
+      (= section-type 10) (build-code-section wasm-bytes section-length)
+      :else {})))
+
+(defn recursive-map-builder
+  [f input iterations]
+  (loop [current-input input
+         results {}
+         count 0]
+    (if (= count iterations)
+      results
+      (let [result (f current-input)
+            next-input (:rest result)
+            result-key (keyword (:sec_name result))]
+        (recur next-input
+               (assoc results result-key result)
+               (inc count))))))
+
+(defn recursively-extract-sections
+  [wasm-bytes]
+  (recursive-map-builder extract-section wasm-bytes 4))
 
 (defn load-and-validate-wasm
-  [file-name]
-  (let [bytes (get-bytes file-name)]
+  [get-wasm-bytes file-name]
+  (let [bytes (get-wasm-bytes file-name)]
     (if (is-wasm-header-valid? bytes [0 97 115 109 1 0 0 0])
-      (extract-section (drop 8 bytes))
+      (recursively-extract-sections (drop 8 bytes))
       "Invalid")))
+
 (defn -main [& args]
-  (println (load-and-validate-wasm "main.wasm")))
+  (println (load-and-validate-wasm get-bytes "main.wasm")))
