@@ -22,15 +22,12 @@
 
 (defn is-wasm-header-valid?
   "Validates that wasm header is correct"
-  [bytes expected-start]
-  (= (take (count expected-start) bytes) expected-start))
+  [bytes]
+  (= (take 8 bytes) [0 97 115 109 1 0 0 0]))
 
 (defn calculate-length
   [wasm-bytes]
   (first (drop 1 wasm-bytes)))
-
-
-
 
 (defn function-to-map
   [wasm-bytes]
@@ -43,8 +40,8 @@
   (let [func-length (first wasm-bytes)
         func-bytes (take func-length (drop 1 wasm-bytes))]
     (if (= 1 num-of-funcs)
-      (function-to-map func-bytes)
-      (list (function-to-map func-bytes) (extract-functions (drop (+ 1 func-length) wasm-bytes) (- num-of-funcs 1))))))
+      (list (function-to-map func-bytes))
+      (concat (list (function-to-map func-bytes)) (extract-functions (drop (+ 1 func-length) wasm-bytes) (- num-of-funcs 1))))))
 (defn build-type-section
   [wasm-bytes length]
   ;(println "in build-type-section")
@@ -59,7 +56,7 @@
   {:sec_name "07_export" :content (take (+ 2 length) wasm-bytes) :rest (drop (+ length 2) wasm-bytes)})
 
 (defn build-code-section
-  [wasm-bytes length]
+  [wasm-bytes]
   (let [num-of-funcs (first (drop 2 wasm-bytes))]
     ;(println wasm-bytes)
     {:sec_name "10_code" :content (extract-functions (drop 3 wasm-bytes) num-of-funcs)}))
@@ -68,17 +65,16 @@
   [wasm-bytes]
   (let [section-type (first wasm-bytes)
         section-length (calculate-length wasm-bytes)]
-    ;(println wasm-bytes)
     (cond
       ;; type section
       (= section-type 1) (build-type-section wasm-bytes section-length)
-      ;; function section, update to function
+      ;; function section
       (= section-type 3) (build-function-section wasm-bytes section-length)
-      ;; export section, update to export
+      ;; export section
       (= section-type 7) (build-export-section wasm-bytes section-length)
-      ;; code section, update to code
-      (= section-type 10) (build-code-section wasm-bytes section-length)
-      :else {})))
+      ;; code section, don't need length since it's the last section
+      (= section-type 10) (build-code-section wasm-bytes)
+                                              :else {})))
 
 (defn recursive-map-builder
   [f input iterations]
@@ -101,7 +97,7 @@
 (defn load-and-validate-wasm
   [get-wasm-bytes file-name]
   (let [bytes (get-wasm-bytes file-name)]
-    (if (is-wasm-header-valid? bytes [0 97 115 109 1 0 0 0])
+    (if (is-wasm-header-valid? bytes)
       (recursively-extract-sections (drop 8 bytes))
       "Invalid")))
 
