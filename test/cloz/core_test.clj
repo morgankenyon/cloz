@@ -2,13 +2,19 @@
   (:require [clojure.test :refer :all]
             [cloz.core :refer :all]))
 
+(def valid-wasm-header [0 97 115 109 1 0 0 0])
+(def valid-wasm-program [0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 127, 3, 2, 1, 0, 7, 8, 1, 4, 109, 97, 105, 110, 0, 0, 10, 6, 1, 4, 0, 65, 23, 11])
+(def parsed-program {:01_type {:sec_name "01_type", :content (list 1 5 1 96 0 1 127)}, :03_func {:sec_name "03_func", :content (list 3 2 1 0)}, :07_export {:sec_name "07_export", :content (list 7 8 1 4 109 97 105 110 0 0)}, :10_code {:sec_name "10_code", :content (list {:num-of-params 0, :body (list 65 23 11)})}}
+)
+(defn get-program [file-name]
+  valid-wasm-program)
 (deftest can-validate-good-header
   (testing "can ensure header is valid"
-    (is (= true (is-wasm-header-valid? [0 97 115 109 1 0 0 0])))))
+    (is (= true (is-wasm-header-valid? valid-wasm-header)))))
 
 (deftest can-validate-good-header-and-extra
   (testing "can ensure header is valid"
-    (is (= true (is-wasm-header-valid? [0 97 115 109 1 0 0 0 1 1 1 2])))))
+    (is (= true (is-wasm-header-valid? (conj valid-wasm-header [1 1 1 2]))))))
 
 (deftest can-catch-bad-header
   (testing "can ensure validations fails for bad header"
@@ -38,3 +44,16 @@
       (is (= 2 (count func-list)))
       (is (= (:body (first func-list)) [65 23 11]))
       (is (= (:body (second func-list)) [65 24 11])))))
+
+(deftest can-parse-basic-program
+  (testing "can parse program that returns a number"
+    (let [parsed-program (load-and-validate-wasm get-program "main.wasm")]
+      (println parsed-program)
+      (is (= 4 (count parsed-program)))
+      (is (contains? parsed-program :01_type))
+      (is (not (contains? (parsed-program :01_type) :rest)))
+      (is (contains? parsed-program :03_func))
+      (is (not (contains? (parsed-program :03_type) :rest)))
+      (is (contains? parsed-program :07_export))
+      (is (not (contains? (parsed-program :07_type) :rest)))
+      (is (contains? parsed-program :10_code)))))

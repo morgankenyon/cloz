@@ -42,18 +42,23 @@
     (if (= 1 num-of-funcs)
       (list (function-to-map func-bytes))
       (concat (list (function-to-map func-bytes)) (extract-functions (drop (+ 1 func-length) wasm-bytes) (- num-of-funcs 1))))))
+
+(defn get-rest
+  [wasm-bytes length]
+  (drop (+ length 2) wasm-bytes))
+ 
 (defn build-type-section
   [wasm-bytes length]
   ;(println "in build-type-section")
-  {:sec_name "01_type" :content (take (+ 2 length) wasm-bytes) :rest (drop (+ length 2) wasm-bytes)})
+  {:sec_name "01_type" :content (take (+ 2 length) wasm-bytes) :rest (get-rest wasm-bytes length)})
 
 (defn build-function-section
   [wasm-bytes length]
-  {:sec_name "03_function" :content (take (+ 2 length) wasm-bytes) :rest (drop (+ length 2) wasm-bytes)})
+  {:sec_name "03_func" :content (take (+ 2 length) wasm-bytes) :rest (get-rest wasm-bytes length)})
 
 (defn build-export-section
   [wasm-bytes length]
-  {:sec_name "07_export" :content (take (+ 2 length) wasm-bytes) :rest (drop (+ length 2) wasm-bytes)})
+  {:sec_name "07_export" :content (take (+ 2 length) wasm-bytes) :rest (get-rest wasm-bytes length)})
 
 (defn build-code-section
   [wasm-bytes]
@@ -87,12 +92,16 @@
             next-input (:rest result)
             result-key (keyword (:sec_name result))]
         (recur next-input
-               (assoc results result-key result)
+               (assoc results result-key (dissoc result :rest))
                (inc count))))))
 
 (defn recursively-extract-sections
   [wasm-bytes]
   (recursive-map-builder extract-section wasm-bytes 4))
+
+(defn run-program 
+  [wasm-bytes]
+  wasm-bytes)
 
 (defn load-and-validate-wasm
   [get-wasm-bytes file-name]
@@ -100,6 +109,8 @@
     (if (is-wasm-header-valid? bytes)
       (recursively-extract-sections (drop 8 bytes))
       "Invalid")))
+
+
 
 (defn -main [& args]
   (println (load-and-validate-wasm get-bytes "main.wasm")))
