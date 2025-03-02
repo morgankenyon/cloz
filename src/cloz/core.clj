@@ -99,18 +99,32 @@
   [wasm-bytes]
   (recursive-map-builder extract-section wasm-bytes 4))
 
-(defn run-program 
-  [wasm-bytes]
-  wasm-bytes)
+(defn pop-and-return [stack]
+  [(peek stack) (pop stack)])
+
+(defn run-code 
+  [stack wasm-bytes]
+  ;;(println stack)
+  (if (empty? wasm-bytes)
+    (pop-and-return stack)
+    (let [command (first wasm-bytes)]
+      (cond
+        (= 11 command) (pop-and-return stack)
+        ;; add int to stack
+        (= 65 command) (run-code (conj stack (first (drop 1 wasm-bytes))) (drop 2 wasm-bytes))
+        :else (throw (Exception. (str "'" command "' is an unsupported operator type")))))))
 
 (defn load-and-validate-wasm
   [get-wasm-bytes file-name]
   (let [bytes (get-wasm-bytes file-name)]
     (if (is-wasm-header-valid? bytes)
       (recursively-extract-sections (drop 8 bytes))
-      "Invalid")))
+      (throw (Exception. "Need valid wasm header")))))
 
-
+(defn run-wasm-file
+  [get-wasm-bytes file-name]
+  (let [parsed-file (load-and-validate-wasm get-wasm-bytes file-name)]
+    (run-code [] (:body (first (:content (:10_code parsed-file)))))))
 
 (defn -main [& args]
   (println (load-and-validate-wasm get-bytes "main.wasm")))

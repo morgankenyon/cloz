@@ -4,8 +4,9 @@
 
 (def valid-wasm-header [0 97 115 109 1 0 0 0])
 (def valid-wasm-program [0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 127, 3, 2, 1, 0, 7, 8, 1, 4, 109, 97, 105, 110, 0, 0, 10, 6, 1, 4, 0, 65, 23, 11])
-(def parsed-program {:01_type {:sec_name "01_type", :content (list 1 5 1 96 0 1 127)}, :03_func {:sec_name "03_func", :content (list 3 2 1 0)}, :07_export {:sec_name "07_export", :content (list 7 8 1 4 109 97 105 110 0 0)}, :10_code {:sec_name "10_code", :content (list {:num-of-params 0, :body (list 65 23 11)})}}
-)
+(def parsed-program {:01_type {:sec_name "01_type", :content (list 1 5 1 96 0 1 127)}, :03_func {:sec_name "03_func", :content (list 3 2 1 0)}, :07_export {:sec_name "07_export", :content (list 7 8 1 4 109 97 105 110 0 0)}, :10_code {:sec_name "10_code", :content (list {:num-of-params 0, :body (list 65 23 11)})}})
+(def simple-code-body (list 65 23 11))
+
 (defn get-program [file-name]
   valid-wasm-program)
 (deftest can-validate-good-header
@@ -48,7 +49,7 @@
 (deftest can-parse-basic-program
   (testing "can parse program that returns a number"
     (let [parsed-program (load-and-validate-wasm get-program "main.wasm")]
-      (println parsed-program)
+      ;;(println parsed-program)
       (is (= 4 (count parsed-program)))
       (is (contains? parsed-program :01_type))
       (is (not (contains? (parsed-program :01_type) :rest)))
@@ -57,3 +58,9 @@
       (is (contains? parsed-program :07_export))
       (is (not (contains? (parsed-program :07_type) :rest)))
       (is (contains? parsed-program :10_code)))))
+
+(deftest can-run-simple-code-body
+  (testing "can run a simple code body that only returns a number"
+    (let [output (run-code [] simple-code-body)]
+      ;;(println output)
+      (is (= 23 (first output))))))
