@@ -102,6 +102,11 @@
 (defn pop-and-return [stack]
   [(peek stack) (pop stack)])
 
+(defn binary-op [op stack wasm-bytes]
+  (let [add-result (op (first stack) (second stack))
+        new-stack (conj (vec (drop 2 stack)) add-result)
+        current-bytes (drop 1 wasm-bytes)]
+    [new-stack current-bytes]))
 (defn run-code 
   [stack wasm-bytes]
   ;; (println stack)
@@ -119,10 +124,11 @@
           (run-code new-stack current-bytes))
         ;; i32.addition
         (= 106 command)
-        (let [add-result (+ (first stack) (second stack))
-              new-stack (conj (vec (drop 2 stack)) add-result)
-              current-bytes (drop 1 wasm-bytes)]
-          (run-code new-stack current-bytes))
+        (let [op-result (binary-op + stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
+        (= 107 command)
+        (let [op-result (binary-op - stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
         :else (throw (Exception. (str "'" command "' is an unsupported operator type")))))))
 
 (defn load-and-validate-wasm
@@ -138,5 +144,5 @@
     (first (run-code [] (:body (first (:content (:10_code parsed-file))))))))
 
 (defn -main [& args]
-  (let [output (run-wasm-file get-bytes "multipleAdditions.wasm")]
+  (let [output (run-wasm-file get-bytes "subtraction.wasm")]
     (println output)))
