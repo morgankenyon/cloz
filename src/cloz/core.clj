@@ -104,6 +104,9 @@
 
 (defn run-code 
   [stack wasm-bytes]
+  ;; (println stack)
+  ;; (println wasm-bytes)
+  ;; (println "")
   (if (empty? wasm-bytes)
     (pop-and-return stack)
     (let [command (first wasm-bytes)]
@@ -118,7 +121,7 @@
         (= 106 command)
         (let [add-result (+ (first stack) (second stack))
               new-stack (conj (vec (drop 2 stack)) add-result)
-              current-bytes (drop 2 wasm-bytes)]
+              current-bytes (drop 1 wasm-bytes)]
           (run-code new-stack current-bytes))
         :else (throw (Exception. (str "'" command "' is an unsupported operator type")))))))
 
@@ -135,5 +138,5 @@
     (first (run-code [] (:body (first (:content (:10_code parsed-file))))))))
 
 (defn -main [& args]
-  (let [output (run-wasm-file get-bytes "addition.wasm")]
+  (let [output (run-wasm-file get-bytes "multipleAdditions.wasm")]
     (println output)))
