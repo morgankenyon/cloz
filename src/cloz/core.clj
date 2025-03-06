@@ -126,6 +126,7 @@
         (= 106 command)
         (let [op-result (binary-op + stack wasm-bytes)]
           (run-code (first op-result) (second op-result)))
+        ;; i32.subtraction
         (= 107 command)
         (let [op-result (binary-op - stack wasm-bytes)]
           (run-code (first op-result) (second op-result)))
