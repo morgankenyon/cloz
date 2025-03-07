@@ -122,13 +122,25 @@
         (let [new-stack (conj stack (first (drop 1 wasm-bytes)))
               current-bytes (drop 2 wasm-bytes)]
           (run-code new-stack current-bytes))
-        ;; i32.addition
+        ;; i32.add
         (= 106 command)
         (let [op-result (binary-op + stack wasm-bytes)]
           (run-code (first op-result) (second op-result)))
-        ;; i32.subtraction
+        ;; i32.sub
         (= 107 command)
         (let [op-result (binary-op - stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
+        ;; i32.mul
+        (= 108 command)
+        (let [op-result (binary-op * stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
+        ;; i32.div_s
+        (= 109 command)
+        (let [op-result (binary-op / stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
+        ;; i32.rem_s
+        (= 111 command)
+        (let [op-result (binary-op rem stack wasm-bytes)]
           (run-code (first op-result) (second op-result)))
         :else (throw (Exception. (str "'" command "' is an unsupported operator type")))))))
 

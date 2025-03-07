@@ -9,6 +9,11 @@
 (def int-add-code-body (list 65 9 65 11 106 11))
 (def int-add-multiple-code-body (list 65 9 65 11 106 65 4 106 65 6 106 11))
 (def int-sub-code-body (list 65 10 65 5 107 11))
+(def int-mul-code-body (list 65 10 65 2 108 11))
+(def int-div-code-body (list 65 10 65 2 109 11))
+(def int-rem-code-body (list 65 10 65 3 111 11))
+
+
 
 (defn get-program [file-name]
   valid-wasm-program)
@@ -85,3 +90,21 @@
     (let [output (run-code [] int-sub-code-body)]
       ;;(println output)
       (is (= 5 (first output))))))
+
+(deftest can-run-int-multiply-code-body
+  (testing "can multiply two ints"
+    (let [output (run-code [] int-mul-code-body)]
+      ;;(println output)
+      (is (= 20 (first output))))))
+
+(deftest can-run-int-divide-code-body
+  (testing "can divide two ints"
+    (let [output (run-code [] int-div-code-body)]
+      ;;(println output)
+      (is (= 5 (first output))))))
+
+(deftest can-run-rem-divide-code-body
+  (testing "can calculate remainder of two ints"
+    (let [output (run-code [] int-rem-code-body)]
+      ;;(println output)
+      (is (= 1 (first output))))))
