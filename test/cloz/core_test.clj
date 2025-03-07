@@ -5,7 +5,10 @@
 (def valid-wasm-header [0 97 115 109 1 0 0 0])
 (def valid-wasm-program [0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 127, 3, 2, 1, 0, 7, 8, 1, 4, 109, 97, 105, 110, 0, 0, 10, 6, 1, 4, 0, 65, 23, 11])
 (def parsed-program {:01_type {:sec_name "01_type", :content (list 1 5 1 96 0 1 127)}, :03_func {:sec_name "03_func", :content (list 3 2 1 0)}, :07_export {:sec_name "07_export", :content (list 7 8 1 4 109 97 105 110 0 0)}, :10_code {:sec_name "10_code", :content (list {:num-of-params 0, :body (list 65 23 11)})}})
-(def simple-code-body (list 65 23 11))
+(def int-const-code-body (list 65 23 11))
+(def int-add-code-body (list 65 9 65 11 106 11))
+(def int-add-multiple-code-body (list 65 9 65 11 106 65 4 106 65 6 106 11))
+(def int-sub-code-body (list 65 10 65 5 107 11))
 
 (defn get-program [file-name]
   valid-wasm-program)
@@ -59,8 +62,26 @@
       (is (not (contains? (parsed-program :07_type) :rest)))
       (is (contains? parsed-program :10_code)))))
 
-(deftest can-run-simple-code-body
-  (testing "can run a simple code body that only returns a number"
-    (let [output (run-code [] simple-code-body)]
+(deftest can-run-int-const-code-body
+  (testing "can return an int const"
+    (let [output (run-code [] int-const-code-body)]
       ;;(println output)
       (is (= 23 (first output))))))
+
+(deftest can-run-int-add-code-body
+  (testing "can add two ints"
+    (let [output (run-code [] int-add-code-body)]
+      ;;(println output)
+      (is (= 20 (first output))))))
+
+(deftest can-run-int-add-multiple-code-body
+  (testing "can add mulitple ints"
+    (let [output (run-code [] int-add-multiple-code-body)]
+      ;;(println output)
+      (is (= 30 (first output))))))
+
+(deftest can-run-int-sub-code-body
+  (testing "can subtract two ints"
+    (let [output (run-code [] int-sub-code-body)]
+      ;;(println output)
+      (is (= 5 (first output))))))
