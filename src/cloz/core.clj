@@ -11,14 +11,27 @@
     (io/copy xin xout)
     (.toByteArray xout)))
 
-(defn get-file-path
+(defn get-absolute-file-path
+  "Determines appropriate file path from any file"
+  [file-path]
+  (.getAbsolutePath (java.io.File. file-path)))
+
+(defn get-resource-file-path
   "Determines appropriate file path from resource file"
   [file-name]
   (.getFile (clojure.java.io/resource file-name)))
 
-(defn get-bytes
+(defn get-absolute-bytes
+  "Loads bytes from file in any folder"
   [file-name]
-  (file-to-bytes (get-file-path file-name)))
+  (let [file-path (get-absolute-file-path file-name)]
+    (file-to-bytes file-path)))
+
+(defn get-resource-bytes
+  "Loads bytes from file in resource folder"
+  [file-name]
+  (let [file-path (get-resource-file-path file-name)]
+    (file-to-bytes file-path)))
 
 (defn is-wasm-header-valid?
   "Validates that wasm header is correct"
@@ -157,5 +170,7 @@
     (first (run-code [] (:body (first (:content (:10_code parsed-file))))))))
 
 (defn -main [& args]
-  (let [output (run-wasm-file get-bytes "subtraction.wasm")]
-    (println output)))
+  (if (= 0 (count args))
+    (throw (Exception. "Pass wasm filename to run"))
+    (let [output (run-wasm-file get-absolute-bytes (first args))]
+      (println output))))
