@@ -135,6 +135,22 @@
         (let [new-stack (conj stack (first (drop 1 wasm-bytes)))
               current-bytes (drop 2 wasm-bytes)]
           (run-code new-stack current-bytes))
+        ;; i32.lt_s
+        (= 72 command)
+        (let [op-result (binary-op < stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
+        ;; i32.gt_s
+        (= 74 command)
+        (let [op-result (binary-op > stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
+        ;; i32.le_s
+        (= 76 command)
+        (let [op-result (binary-op <= stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
+        ;; i32.ge_s
+        (= 78 command)
+        (let [op-result (binary-op >= stack wasm-bytes)]
+          (run-code (first op-result) (second op-result)))
         ;; i32.add
         (= 106 command)
         (let [op-result (binary-op + stack wasm-bytes)]

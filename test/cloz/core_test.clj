@@ -12,6 +12,10 @@
 (def int-mul-code-body (list 65 10 65 2 108 11))
 (def int-div-code-body (list 65 10 65 2 109 11))
 (def int-rem-code-body (list 65 10 65 3 111 11))
+(def int-lt_s-code-body (list 65 12 65 7 72 11))
+(def int-gt_s-code-body (list 65 12 65 7 74 11))
+(def int-le_s-code-body (list 65 12 65 7 76 11))
+(def int-ge_s-code-body (list 65 12 65 7 78 11))
 
 
 
@@ -103,8 +107,32 @@
       ;;(println output)
       (is (= 5 (first output))))))
 
-(deftest can-run-rem-divide-code-body
+(deftest can-run-int-rem-code-body
   (testing "can calculate remainder of two ints"
     (let [output (run-code [] int-rem-code-body)]
       ;;(println output)
       (is (= 1 (first output))))))
+
+(deftest can-run-int-lt_s--code-body
+  (testing "can determine if one int is less than another"
+    (let [output (run-code [] int-lt_s-code-body)]
+      ;;(println output)
+      (is (= false (first output))))))
+
+(deftest can-run-int-gt_s-code-body
+  (testing "can determine if one int is greater than another"
+    (let [output (run-code [] int-gt_s-code-body)]
+      ;;(println output)
+      (is (= true (first output))))))
+
+(deftest can-run-int-le_s--code-body
+  (testing "can determine if one int is less than or equal to another"
+    (let [output (run-code [] int-le_s-code-body)]
+      ;;(println output)
+      (is (= false (first output))))))
+
+(deftest can-run-int-ge_s-code-body
+  (testing "can determine if one int is greater than or equal to another"
+    (let [output (run-code [] int-ge_s-code-body)]
+      ;;(println output)
+      (is (= true (first output))))))
